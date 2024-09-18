@@ -15,7 +15,7 @@
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
-                    <a href="{% url "ship" ship.id%}"><h3 class="card-title">{{ ship.name }}</h3></a>
+                    <a href="{% url "ship" ship.id%}" style="color: black; text-decoration: none"><h3 class="card-title">{{ ship.name }}</h3></a>
                     <p class="card-text text-description">{{ ship.description | truncatechars:160 | linebreaksbr }}</p>
                     <a href="#" class="btn btn-primary mt-2">Добавить в сражение</a>
                     </div>
