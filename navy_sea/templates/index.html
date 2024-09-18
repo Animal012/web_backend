@@ -1,0 +1,47 @@
+{% extends "layouts/base.html" %}
+{%load static%}
+
+{% block content %}
+
+<div class="row mt-3">
+    <div class="col-2"></div>
+    <div class="col-6">
+    {% for ship in ships %}
+        <div class="row">
+            <div class="card mb-3">
+                <div class="row g-0">
+                <div class="col-md-4 mt-4">
+                    <img src="{{ ship.photo }}" class="img-fluid rounded-start" style="object-fit: cover;" alt="...">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                    <a href="{% url "ship" ship.id%}"><h3 class="card-title">{{ ship.name }}</h3></a>
+                    <p class="card-text text-description">{{ ship.description | truncatechars:160 | linebreaksbr }}</p>
+                    <a href="#" class="btn btn-primary mt-2">Добавить в сражение</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+    <div class="col-3">
+        <div class="input-group mb-3">
+            <form class="d-flex" method="GET" action="{% url 'index' %}" role="search">
+                <input class="form-control me-2" type="search" name="sh" placeholder="Введите название" style="width: 250px; height: 40px" value="{{ query|default:'' }}">
+                <button type="submit" class="btn btn-search btn-fix ps-0" style="height: 30px">
+                    <img src="{% static 'img/search.svg' %}" height="40px" width="30px">
+                </button>
+            </form>
+        </div>
+        <div class="d-flex flex-column align-items-end position-relative" style="width: 280px">
+            <a href="{% url "fight" fight %}"><img src="{% static "img/plus.svg" %}" width="40px"></a>
+            <span class="badge basket-badge position-absolute top-0 start-100 translate-down">
+                {{ count }}
+            </span>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

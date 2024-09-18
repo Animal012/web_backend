@@ -1,0 +1,112 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-2">
+    <div class="row justify-content-center mb-4">
+        <div class="col-8 text-center">
+            <h2>Название сражения</h2>
+            <input type="text" class="form-control" id="battle-name" value="{{ battle_name }}">
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h3>Сторона 1</h3>
+            <input type="text" class="form-control mb-3" id="side-1" value="{{ side1_name }}">
+            
+            <h3>Адмирал 1</h3>
+            <input type="text" class="form-control" id="admiral-1" value="{{ side1_admiral }}">
+        </div>
+        <div class="col-md-6">
+            <h3>Сторона 2</h3>
+            <input type="text" class="form-control mb-3" id="side-2" value="{{ side2_name }}">
+            
+            <h3>Адмирал 2</h3>
+            <input type="text" class="form-control" id="admiral-2" value="{{ side2_admiral }}">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-6">
+            {% for ship in side1_ships %}
+            <div class="card mb-3">
+                <div class="row g-0">
+                    <div class="col-md-4 mt-4" style="padding: 5px;">
+                        <img src="{{ ship.photo }}" class="img-fluid rounded-start">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h3 class="card-title">{{ ship.name }}</h3>
+                            
+                            <div class="mb-3">
+                                <select id="side-selector-{{ ship.id }}" class="form-select" style="width: 250px">
+                                    <option value="1" selected>Сторона 1</option>
+                                    <option value="2">Сторона 2</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group mb-3" style="width: 200px">
+                                <button class="btn btn-outline-secondary" type="button">−</button>
+                                <input type="text" class="form-control text-center" id="ship-quantity-{{ ship.id }}" value="1">
+                                <button class="btn btn-outline-secondary" type="button">+</button>
+                                <button class="btn btn-outline-danger ms-2" type="button">
+                                    <img src="{% static 'img/delete.svg' %}" alt="Удалить" width="20">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-6">
+            {% for ship in side2_ships %}
+            <div class="card mb-3">
+                <div class="row g-0">
+                    <div class="col-md-4 mt-4" style="padding: 5px;">
+                        <img src="{{ ship.photo }}" class="img-fluid rounded-start">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h3 class="card-title">{{ ship.name }}</h3>
+                            
+                            <div class="mb-3">
+                                <select id="side-selector-{{ ship.id }}" class="form-select" style="width: 250px">
+                                    <option value="1">Сторона 1</option>
+                                    <option value="2" selected>Сторона 2</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group mb-3" style="width: 200px">
+                                <button class="btn btn-outline-secondary" type="button">−</button>
+                                <input type="text" class="form-control text-center" id="ship-quantity-{{ ship.id }}" value="1">
+                                <button class="btn btn-outline-secondary" type="button">+</button>
+                                <button class="btn btn-outline-danger ms-2" type="button">
+                                    <img src="{% static 'img/delete.svg' %}" alt="Удалить" width="20">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row justify-content-center mt-2 mb-4">
+        <div class="col-6 text-center">
+            <h2>Итог сражения</h2>
+            <select id="battle-result" class="form-select">
+                <option value="1" {% if battle_result == 1 %}selected{% endif %}>Сторона 1</option>
+                <option value="2" {% if battle_result == 2 %}selected{% endif %}>Сторона 2</option>
+            </select>
+        </div>
+    </div>
+</div>
+{% endblock %}
