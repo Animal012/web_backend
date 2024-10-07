@@ -3,9 +3,9 @@ from test_data import SHIPS
 from test_data import FIGHTS_DATA
 
 def index(request):
-    ship_name = request.GET.get('sh')
+    ship_name = request.GET.get('ship')
     first_battle = FIGHTS_DATA[0]
-    count_ships = len(first_battle['side1']['ships']) + len(first_battle['side2']['ships'])
+    count_ships = len(first_battle['ships'])
     if ship_name:
         ships=[]
         for ship in SHIPS:
@@ -35,18 +35,13 @@ def fight(request, fight_id):
     fight_data = next((fight for fight in FIGHTS_DATA if fight['id'] == fight_id), None)
     
     if fight_data:
-        side1_ships = get_ships_by_ids(fight_data['side1']['ships'])
-        side2_ships = get_ships_by_ids(fight_data['side2']['ships'])
+        battle_ships = get_ships_by_ids(fight_data['ships'])
 
         context = {
             'battle_name': fight_data['battle'],
-            'side1_name': fight_data['side1']['side_name'],
-            'side1_admiral': fight_data['side1']['captain'],
-            'side1_ships': side1_ships,
-            'side2_name': fight_data['side2']['side_name'],
-            'side2_admiral': fight_data['side2']['captain'],
-            'side2_ships': side2_ships,
-            'battle_result': fight_data['result'],
+            'battle_ships': battle_ships,
+            'battle_admirals': fight_data['admirals'],
+            'battle_result': fight_data['result']
         }
 
         return render(request, 'fight.html', context)
