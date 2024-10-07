@@ -14,10 +14,15 @@
                 </button>
             </form>
             <div class="position-relative ms-4" style="width: 40px;">
-                <a href="{% url "fight" fight %}"><img src="{% static "img/plus.svg" %}" width="40px"></a>
-                <span class="badge basket-badge position-absolute top-0 start-100 translate-down">
-                    {{ count }}
-                </span>
+                {% if fight %}
+                    <a href="{% url "fight" fight.id %}"><img src="{% static "img/plus.svg" %}" width="40px"></a>
+                    <span class="badge basket-badge position-absolute top-0 start-100 translate-down">
+                        {{ fight.count }}
+                    </span>
+                {% else %}
+                    <a href="#"><img src="{% static "img/plus.svg" %}" width="40px"></a>
+                    <span class="badge basket-badge position-absolute top-0 start-100 translate-down"> 0 </span>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -35,13 +40,17 @@
                     </div>
                     <div>
                         <div class="card-body">
-                        <a href="{% url "ship" ship.id%}" style="color: black; text-decoration: none"><h3 class="card-title">{{ ship.name }}</h3></a>
+                        <a href="{% url "ship" ship.id%}" style="color: black; text-decoration: none"><h3 class="card-title">{{ ship.ship_name }}</h3></a>
                         <div class="card-text text-description">
                             <h5>Год постройки: {{ ship.year }}</h5>
                             <h5>Длина: {{ ship.length }} м</h5>
                             <h5>Водоизмещение: {{ ship.displacement }} т</h5>
                             <h5>Страна: {{ ship.country }}</h5>
                         </div>
+                        <form method="POST" action="{% url 'add_ship_to_fight' ship.id %}">
+                            {% csrf_token %}
+                            <button class="add-btn">Добавить</button>
+                        </form>
                         </div>
                     </div>
                 </div>

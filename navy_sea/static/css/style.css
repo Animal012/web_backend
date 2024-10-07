@@ -45,3 +45,17 @@ body {
     font-size: 12px;
     padding: 0;
 }
+
+.add-btn {
+    border-radius: 10px;
+    width: 150px;
+}
+
+.del-btn {
+    border-radius: 10px;
+    width: 350px;
+    height: 45px;
+    background-color: red;
+    color: white;
+    font-size: 20px;
+}

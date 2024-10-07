@@ -3,48 +3,64 @@
 {% load custom_filters %}
 
 {% block content %}
-<div class="container mt-2">
-    <div class="row justify-content-center mb-4">
-        <div class="col-8 text-center">
-            <h2>Название сражения</h2>
-            <input type="text" class="form-control" id="battle-name" value="{{ battle_name }}">
-        </div>
-    </div>
 
+{% if error_message %}
     <div class="row">
-        {% for ship in battle_ships %}
-        <div class="col-2"></div>
-        <div class="col-4">
-            <div class="d-flex">
-                <div class="card mb-3">
-                    <img src="{{ ship.photo }}" class="img-fluid rounded-start" style="width: 100%; height: 250px; object-fit: cover;" alt="...">
-                    <div>
-                        <div class="card-body">
-                        <h3 class="card-title">{{ ship.name }}</h3></a>
-                        <div class="card-text text-description">
-                            <h5>Год постройки: {{ ship.year }}</h5>
-                            <h5>Длина: {{ ship.length }} м</h5>
-                            <h5>Водоизмещение: {{ ship.displacement }} т</h5>
-                            <h5>Страна: {{ ship.country }}</h5>
-                        </div>
+        <div class="col-3"></div>
+        <div class="mt-5 col-6">
+            <h2 class="text-center">{{ error_message }}<h2>
+        </div>
+        <div class="col-3"></div>
+    </div>
+{% else %}
+    <div class="container mt-2">
+        <div class="row justify-content-center mb-4">
+            <div class="col-8 text-center">
+                <h2>Название сражения</h2>
+                <input type="text" class="form-control" id="battle-name" value="{{ battle_name }}">
+            </div>
+        </div>
+
+        <div class="row">
+            {% for ship in battle_ships %}
+            <div class="col-2"></div>
+            <div class="col-4">
+                <div class="d-flex">
+                    <div class="card mb-3">
+                        <img src="{{ ship.photo }}" class="img-fluid rounded-start" style="width: 100%; height: 250px; object-fit: cover;" alt="...">
+                        <div>
+                            <div class="card-body">
+                            <h3 class="card-title">{{ ship.ship_name }}</h3></a>
+                            <div class="card-text text-description">
+                                <h5>Год постройки: {{ ship.year }}</h5>
+                                <h5>Длина: {{ ship.length }} м</h5>
+                                <h5>Водоизмещение: {{ ship.displacement }} т</h5>
+                                <h5>Страна: {{ ship.country }}</h5>
+                            </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="col-4 mt-5">
+                <h2>Адмирал</h2>
+                <input type="text" class="form-control" id="battle-admirals" value="{{ battle_admirals|index:ship.id }}">
+            </div>
+            <div class="col-2"></div>
+            {% endfor %}
         </div>
-        <div class="col-4 mt-5">
-            <h2>Адмирал</h2>
-            <input type="text" class="form-control" id="battle-admirals" value="{{ battle_admirals|index:ship.id }}">
-        </div>
-        <div class="col-2"></div>
-        {% endfor %}
-    </div>
 
-    <div class="row justify-content-center mb-4">
-        <div class="col-8 text-center">
-            <h2>Итог сражения</h2>
-            <textarea class="form-control" id="battle-result" rows="5">{{ battle_result }}</textarea>
+        <div class="row justify-content-center mb-4">
+            <div class="col-8 text-center">
+                <h2>Итог сражения</h2>
+                <textarea class="form-control" id="battle-result" rows="5">{{ battle_result }}</textarea>
+            </div>
         </div>
+
+        <form method="POST" action="{% url "delete_fight" fight.id %}" class="row justify-content-center mb-4">
+            {% csrf_token %}
+            <button class="del-btn">Удалить сражение</button>
+        </form>
     </div>
-</div>
+{% endif %}
 {% endblock %}

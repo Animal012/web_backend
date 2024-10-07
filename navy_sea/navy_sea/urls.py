@@ -22,5 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name="index"),
     path('ships/<int:ship_id>', views.ship, name="ship"),
-    path('fight/<int:fight_id>', views.fight, name="fight")
+    path('fight/<int:fight_id>', views.fight, name="fight"),
+    path('add-to-fight/<int:ship_id>', views.add_ship_to_fight, name="add_ship_to_fight"),
+    path('delete-fight/<int:fight_id>', views.delete_fight, name="delete_fight")
 ]
