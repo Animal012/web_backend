@@ -5,7 +5,7 @@ from app.models import Ship, Fight, FightShip
 class ShipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ship
-        fields = ['id', 'ship_name', 'description', 'year', 'length', 'displacement', 'country', 'photo', 'status']
+        fields = ['id', 'ship_name', 'description', 'year', 'length', 'displacement', 'country', 'photo']
 
 class FightShipSerializer(serializers.ModelSerializer):
     ship = ShipSerializer(read_only=True)

@@ -21,7 +21,7 @@ class UserSingleton:
     def get_instance(cls):
         if cls._instance is None:
             try:
-                cls._instance = User.objects.get(id=11)
+                cls._instance = User.objects.get(id=2)
             except User.DoesNotExist:
                 cls._instance = None
         return cls._instance
@@ -65,7 +65,10 @@ class ShipList(APIView):
     serializer_class = ShipSerializer
 
     def get(self, request, format=None):
+        ship_name = request.query_params.get('ship_name')
         ships = self.model_class.objects.filter(status='a')
+        if ship_name:
+            ships = ships.filter(ship_name__icontains=ship_name)
         user = UserSingleton.get_instance()
         draft_fight_id = None
         if user:
@@ -160,9 +163,9 @@ class ShipDetail(APIView):
             draft_fight.save()
 
         if FightShip.objects.filter(fight=draft_fight, ship=ship).exists():
-            return Response(data={"error": "Корабль уже добавлено в черновик."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={"error": "Корабль уже добавлен в черновик."}, status=status.HTTP_400_BAD_REQUEST)
 
-        FightShip.objects.create(fight=draft_fight, ship=ship, count=1)
+        FightShip.objects.create(fight=draft_fight, ship=ship)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def put(self, request, pk, format=None):
@@ -224,7 +227,7 @@ class FightList(APIView):
 
     def put(self, request, format=None):
         user = UserSingleton.get_instance()
-        required_fields = ['table_number']  #????????????????????????????
+        required_fields = ['fight_name']
         for field in required_fields:
             if field not in request.data or request.data[field] is None:
                 return Response({field: 'Это поле обязательно для заполнения.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -267,9 +270,11 @@ class FightDetail(APIView):
             status_value = request.data['status']
             if status_value not in ['f', 'r']:
                 return Response({"error": "Неверный статус."}, status=status.HTTP_400_BAD_REQUEST)
-            dinner.completed_at = timezone.now()
+
+            updated_data = request.data.copy()
+            fight.completed_at = timezone.now()
             
-            serializer = self.serializer_class(dinner, data=updated_data, partial=True)
+            serializer = self.serializer_class(fight, data=updated_data, partial=True)
             if serializer.is_valid():
                 serializer.save(moderator=user)
                 return Response(serializer.data)
