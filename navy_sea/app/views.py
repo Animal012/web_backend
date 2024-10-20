@@ -71,15 +71,19 @@ class ShipList(APIView):
             ships = ships.filter(ship_name__icontains=ship_name)
         user = UserSingleton.get_instance()
         draft_fight_id = None
+        count = 0
         if user:
             draft_fight = Fight.objects.filter(creator=user, status='dr').first()
             if draft_fight:
                 draft_fight_id = draft_fight.id
+                count = FightShip.objects.filter(fight=draft_fight).count()
 
-        serializer = self.serializer_class(ships, many=True)
+        #serializer = self.serializer_class(ships, many=True)
+        serializer = self.serializer_class(ships, many=True, context={'is_list': True})
         response_data = {
             'ships': serializer.data,
-            'draft_fight_id': draft_fight_id 
+            'draft_fight_id': draft_fight_id, 
+            'count': count
         }
         return Response(response_data)
 
@@ -155,7 +159,6 @@ class ShipDetail(APIView):
 
         if not draft_fight:
             draft_fight = Fight.objects.create(
-                table_number = 1,
                 creator=user,
                 status='dr',
                 created_at=timezone.now()
@@ -219,8 +222,12 @@ class FightList(APIView):
             fights = fights.filter(status=status)
 
         serialized_fights = [
-            {**self.serializer_class(fight).data, 'creator': fight.creator.username, 'moderator': fight.moderator.username}
-            for fight in fights
+        {
+            **self.serializer_class(fight, exclude_ships=True).data,
+            'creator': fight.creator.username,
+            'moderator': fight.moderator.username
+        }
+        for fight in fights
         ]
 
         return Response(serialized_fights)
@@ -254,7 +261,10 @@ class FightDetail(APIView):
 
     def get(self, request, pk, format=None):
         fight = get_object_or_404(self.model_class, pk=pk)
-        serializer = self.serializer_class(fight)
+        if fight.status == 'del':
+            return Response({"detail": "Эта заявка удалена и недоступна для просмотра."}, status=403)
+        #serializer = self.serializer_class(fight)
+        serializer = self.serializer_class(fight, context={'is_fight': True})
         data = serializer.data
         data['creator'] = fight.creator.username
         if fight.moderator:
@@ -272,7 +282,7 @@ class FightDetail(APIView):
                 return Response({"error": "Неверный статус."}, status=status.HTTP_400_BAD_REQUEST)
 
             updated_data = request.data.copy()
-            fight.completed_at = timezone.now()
+            fight.formed_at = timezone.now()
             
             serializer = self.serializer_class(fight, data=updated_data, partial=True)
             if serializer.is_valid():
@@ -289,6 +299,7 @@ class FightDetail(APIView):
     def delete(self, request, pk, format=None):
         fight = get_object_or_404(self.model_class, pk=pk)
         fight.status = 'del'  # Мягкое удаление
+        fight.formed_at = timezone.now()
         fight.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
