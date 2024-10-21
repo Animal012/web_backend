@@ -273,27 +273,69 @@ class FightDetail(APIView):
         return Response(data)
 
     def put(self, request, pk, format=None):
+        full_path = request.path
+
+        if full_path.endswith('/form/'):
+            return self.put_creator(request, pk)
+        elif full_path.endswith('/complete/'):
+            return self.put_moderator(request, pk)
+        elif full_path.endswith('/edit/'):
+            return self.put_edit(request, pk)
+
+        return Response({"error": "Неверный путь"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put_creator(self, request, pk):
         fight = get_object_or_404(self.model_class, pk=pk)
         user = UserSingleton.get_instance()
 
+        if user == fight.creator:
+
+            if 'status' in request.data and request.data['status'] == 'f':
+                fight.formed_at = timezone.now()
+                updated_data = request.data.copy()
+
+                serializer = self.serializer_class(fight, data=updated_data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"error": "Создатель может только формировать заявку."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"error": "Отказано в доступе"}, status=status.HTTP_403_FORBIDDEN)        
+
+    def put_moderator(self, request, pk):
+        fight = get_object_or_404(self.model_class, pk=pk)
+        user = UserSingleton.get_instance()
+        
         if 'status' in request.data:
             status_value = request.data['status']
-            if status_value not in ['f', 'r']:
-                return Response({"error": "Неверный статус."}, status=status.HTTP_400_BAD_REQUEST)
 
-            updated_data = request.data.copy()
-            fight.formed_at = timezone.now()
-            
-            serializer = self.serializer_class(fight, data=updated_data, partial=True)
-            if serializer.is_valid():
-                serializer.save(moderator=user)
-                return Response(serializer.data)
+            # Модератор может завершить ('c') или отклонить ('r') заявку
+            if status_value in ['c', 'r']:
+                if fight.status != 'f':
+                    return Response({"error": "Заявка должна быть сначала сформирована."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Если статус не был передан, пробуем обновить остальные данные
+                if status_value == 'c':
+                    fight.completed_at = timezone.now()
+                    updated_data = request.data.copy()
+
+                serializer = self.serializer_class(fight, data=updated_data, partial=True)
+                if serializer.is_valid():
+                    serializer.save(moderator=user)
+                    return Response(serializer.data)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"error": "Модератор может только завершить или отклонить заявку."}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put_edit(self, request, pk):
+        fight = get_object_or_404(self.model_class, pk=pk)
+
         serializer = self.serializer_class(fight, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save(moderator=user)
+            serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
