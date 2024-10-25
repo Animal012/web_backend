@@ -342,6 +342,12 @@ class FightDetail(APIView):
 
                 if status_value == 'c':
                     fight.completed_at = timezone.now()
+                    sailors = self.calculate_sailors(fight)
+                    updated_data = request.data.copy()
+                    updated_data['sailors'] = sailors
+
+                elif status_value == 'r':
+                    fight.completed_at = timezone.now()
                     updated_data = request.data.copy()
 
                 serializer = self.serializer_class(fight, data=updated_data, partial=True)
@@ -362,6 +368,16 @@ class FightDetail(APIView):
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def calculate_sailors(self, fight):
+        sailors = 0
+        fight_ships = fight.fightship_set.all()
+
+        for fight_ship in fight_ships:
+            ship_crew = fight_ship.ship.crew
+            sailors += ship_crew
+
+        return sailors
 
     def delete(self, request, pk, format=None):
         fight = get_object_or_404(self.model_class, pk=pk)

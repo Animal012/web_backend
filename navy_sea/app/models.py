@@ -58,6 +58,7 @@ class Ship(models.Model):
     year = models.IntegerField()
     length = models.IntegerField()
     displacement = models.IntegerField()
+    crew = models.IntegerField(null=True, blank=True)
     country = models.CharField(max_length=255)
     photo = models.CharField(null=True, blank=True, max_length=255)
     status = models.CharField(choices=STATUS_CHOICES, max_length=7, default='a')
@@ -86,6 +87,7 @@ class Fight(models.Model):
     ]
     fight_name = models.CharField(null=True, max_length=255)
     result = models.CharField(null=True, max_length=255)
+    sailors = models.IntegerField(null=True)
     status = models.CharField(choices=STATUS_CHOICES, max_length=9, default='dr')
     created_at = models.DateTimeField(auto_now_add=True)
     formed_at = models.DateTimeField(null=True, blank=True)

@@ -5,7 +5,7 @@ from app.models import Ship, Fight, FightShip, CustomUser
 class ShipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ship
-        fields = ['id', 'ship_name', 'description', 'year', 'length', 'displacement', 'country', 'photo']
+        fields = ['id', 'ship_name', 'description', 'year', 'length', 'displacement', 'crew', 'country', 'photo']
     
     def __init__(self, *args, **kwargs):
         # Получаем контекст запроса
@@ -22,7 +22,9 @@ class ShipSerializer(serializers.ModelSerializer):
         # Если это запрос сражения, отображаем только ship_name и photo
         if self.context.get('is_fight', False):
             return {
+                'id': fields['id'],
                 'ship_name': fields['ship_name'],
+                'crew': fields['crew'],
                 'photo': fields['photo']
             }
 
@@ -40,7 +42,7 @@ class FightSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Fight
-        fields = ['id', 'fight_name', 'result', 'status', 'created_at', 'formed_at', 'completed_at', 'creator', 'moderator', 'ships']
+        fields = ['id', 'fight_name', 'result', 'sailors', 'status', 'created_at', 'formed_at', 'completed_at', 'creator', 'moderator', 'ships']
 
     def __init__(self, *args, **kwargs):
         # Получаем контекст из сериализатора
