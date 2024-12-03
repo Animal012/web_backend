@@ -20,7 +20,11 @@ from django.views.decorators.csrf import csrf_exempt
 from app.permissions import *
 import redis
 import uuid
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
 
+def get_csrf_token(request):
+    return JsonResponse({'csrfToken': get_token(request)})
 
 session_storage = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
@@ -427,7 +431,7 @@ class UserViewSet(ModelViewSet):
     #     return [IsAuthenticated()]
 
     def get_permissions(self):
-        if self.action in ['create']:
+        if self.action in ['create', 'profile']:
             permission_classes = [AllowAny]
         elif self.action in ['list']:
             permission_classes = [IsAdmin | IsManager]
@@ -453,14 +457,32 @@ class UserViewSet(ModelViewSet):
     @action(detail=False, methods=['put'], permission_classes=[AllowAny])
     def profile(self, request, format=None):
         user = request.user
-        if user is None:
+        if not user.is_authenticated:
             return Response({'error': 'Вы не авторизованы'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = self.serializer_class(user, data=request.data, partial=True)
+        old_email = user.email
+        data = request.data
+
+        if 'password' in data and data['password']:
+            user.set_password(data['password'])
+            user.save()
+            del data['password']
+
+        serializer = self.serializer_class(user, data=data, partial=True)
+
         if serializer.is_valid():
             serializer.save()
+
+            new_email = serializer.data.get('email')
+            if new_email and old_email != new_email:
+                ssid = request.COOKIES.get("session_id")
+                if ssid:
+                    session_storage.delete(ssid)
+                    session_storage.set(ssid, new_email, ex=settings.SESSION_COOKIE_AGE)
+
             return Response({'message': 'Профиль обновлен', 'user': serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @authentication_classes([])
 @swagger_auto_schema(method='post', request_body=UserSerializer)
@@ -475,13 +497,11 @@ def login_view(request):
     if user is not None:
         random_key = str(uuid.uuid4())
         session_storage.set(random_key, username)
-        response = HttpResponse("{'status': 'ok'}")
+        response = JsonResponse({"status": "ok", "username": username})
         response.set_cookie("session_id", random_key)
         return response
-        # login(request, user)
-        # return HttpResponse("{'status': 'ok'}")
     else:
-        return HttpResponse("{'status': 'error', 'error': 'login failed'}")
+        return JsonResponse({"status": "error", "error": "login failed"})
 
 def logout_view(request):
     session_id = request.COOKIES.get("session_id")
@@ -493,5 +513,18 @@ def logout_view(request):
         return response
     else:
         return HttpResponse("{'status': 'error', 'error': 'no session found'}")
-    # logout(request)
-    # return Response({'status': 'Success'})
+
+@swagger_auto_schema(method='get')
+@api_view(["GET"])
+@csrf_exempt
+def check_session(request):
+    session_id = request.COOKIES.get("session_id")
+    
+    if session_id:
+        username = session_storage.get(session_id)
+        if username:
+            if isinstance(username, bytes):
+                username = username.decode('utf-8')
+            return JsonResponse({"status": "ok", "username": username})
+    
+    return JsonResponse({"status": "error", "message": "Invalid session"})
