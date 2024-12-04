@@ -220,6 +220,14 @@ class FightList(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
+        ssid = request.COOKIES.get("session_id")
+        if ssid and session_storage.exists(ssid):
+            email = session_storage.get(ssid).decode("utf-8")
+            print(f"Email found in session: {email}")
+            request.user = CustomUser.objects.get(email=email)
+        else:
+            print("No valid session found.")
+            request.user = None
         user = request.user
 
         date_from = request.query_params.get('date_from')
@@ -285,8 +293,16 @@ class FightDetail(APIView):
 
     def get(self, request, pk, format=None):
         fight = get_object_or_404(self.model_class, pk=pk)
-        if fight.status == 'del':
-            return Response({"detail": "Эта заявка удалена и недоступна для просмотра."}, status=403)
+        ssid = request.COOKIES.get("session_id")
+        if ssid and session_storage.exists(ssid):
+            email = session_storage.get(ssid).decode("utf-8")
+            print(f"Email found in session: {email}")
+            request.user = CustomUser.objects.get(email=email)
+        else:
+            print("No valid session found.")
+            request.user = None
+        if fight.status == 'del' or fight.creator != request.user:
+            return Response({"detail": "Эта заявка удалена или недоступна для просмотра."}, status=403)
         #serializer = self.serializer_class(fight)
         serializer = self.serializer_class(fight, context={'is_fight': True})
         data = serializer.data
@@ -308,12 +324,19 @@ class FightDetail(APIView):
             return self.put_edit(request, pk)
 
         return Response({"error": "Неверный путь"}, status=status.HTTP_400_BAD_REQUEST)
-
+    
     @swagger_auto_schema(request_body=serializer_class)
     def put_creator(self, request, pk):
         fight = get_object_or_404(self.model_class, pk=pk)
+        ssid = request.COOKIES.get("session_id")
+        if ssid and session_storage.exists(ssid):
+            email = session_storage.get(ssid).decode("utf-8")
+            print(f"Email found in session: {email}")
+            request.user = CustomUser.objects.get(email=email)
+        else:
+            print("No valid session found.")
+            request.user = None
         user = request.user
-
         if user == fight.creator:
 
             if 'status' in request.data and request.data['status'] == 'f':
@@ -457,6 +480,7 @@ class UserViewSet(ModelViewSet):
     @action(detail=False, methods=['put'], permission_classes=[AllowAny])
     def profile(self, request, format=None):
         user = request.user
+        print(user)
         if not user.is_authenticated:
             return Response({'error': 'Вы не авторизованы'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -482,6 +506,7 @@ class UserViewSet(ModelViewSet):
 
             return Response({'message': 'Профиль обновлен', 'user': serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @authentication_classes([])
