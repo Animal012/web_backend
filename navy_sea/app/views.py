@@ -294,6 +294,8 @@ class FightDetail(APIView):
     def get(self, request, pk, format=None):
         fight = get_object_or_404(self.model_class, pk=pk)
         ssid = request.COOKIES.get("session_id")
+        
+        # Проверка на наличие сессии и получение пользователя
         if ssid and session_storage.exists(ssid):
             email = session_storage.get(ssid).decode("utf-8")
             print(f"Email found in session: {email}")
@@ -301,17 +303,30 @@ class FightDetail(APIView):
         else:
             print("No valid session found.")
             request.user = None
+        
+        # Если пользователь является сотрудником (isStaff = true), разрешаем доступ к любому сражению
+        if request.user and request.user.is_staff and fight.status != 'dr':
+            # Сотрудники могут видеть все сражения
+            serializer = self.serializer_class(fight, context={'is_fight': True})
+            data = serializer.data
+            data['creator'] = fight.creator.email
+            if fight.moderator:
+                data['moderator'] = fight.moderator.email
+            return Response(data)
+        
+        # Если сражение удалено или пользователь не является создателем или модератором, доступ запрещен
         if fight.status == 'del' or fight.creator != request.user:
             return Response({"detail": "Эта заявка удалена или недоступна для просмотра."}, status=403)
-        #serializer = self.serializer_class(fight)
+        
+        # Сериализация данных для обычных пользователей
         serializer = self.serializer_class(fight, context={'is_fight': True})
         data = serializer.data
-        print(fight.creator)
         data['creator'] = fight.creator.email
         if fight.moderator:
             data['moderator'] = fight.moderator.email
 
         return Response(data)
+
 
     def put(self, request, pk, format=None):
         full_path = request.path
@@ -522,7 +537,7 @@ def login_view(request):
     if user is not None:
         random_key = str(uuid.uuid4())
         session_storage.set(random_key, username)
-        response = JsonResponse({"status": "ok", "username": username})
+        response = JsonResponse({"status": "ok", "username": username, "is_staff": user.is_staff})
         response.set_cookie("session_id", random_key)
         return response
     else:
@@ -550,6 +565,7 @@ def check_session(request):
         if username:
             if isinstance(username, bytes):
                 username = username.decode('utf-8')
-            return JsonResponse({"status": "ok", "username": username})
+            user = CustomUser.objects.get(email=username)
+            return JsonResponse({"status": "ok", "username": username, "is_staff": user.is_staff})
     
     return JsonResponse({"status": "error", "message": "Invalid session"})
