@@ -229,7 +229,7 @@ class FightList(APIView):
             print("No valid session found.")
             request.user = None
         user = request.user
-
+        
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
         status = request.query_params.get('status')
